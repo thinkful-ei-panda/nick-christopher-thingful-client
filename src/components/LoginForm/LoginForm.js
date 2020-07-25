@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
 import { Button, Input } from '../Utils/Utils'
 import TokenService from '../../services/token-service.js'
+import config from '../../config.js'
 
 export default class LoginForm extends Component {
   static defaultProps = {
@@ -13,16 +14,28 @@ export default class LoginForm extends Component {
     ev.preventDefault()
     const { user_name, password } = ev.target
 
-    console.log('login form submitted')
-    console.log({ user_name, password })
+    fetch(`${config.API_ENDPOINT}/auth/login`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        user_name: user_name.value,
+        password: password.value,
+      })
+    })
+      .then(res => res.json())
+      .then(res => {
 
-    TokenService.saveAuthToken(
-      TokenService.makeBasicAuthToken(user_name.value, password.value)
-    )
-
-    user_name.value = ''
-    password.value = ''
-    this.props.onLoginSuccess()
+        console.log(res);
+        TokenService.saveAuthToken(res.authToken);
+        user_name.value = ''
+        password.value = ''
+        this.props.onLoginSuccess()
+      })
+      .catch(res => {
+        this.setState({ error: res.error });
+      })
   }
 
   render() {
